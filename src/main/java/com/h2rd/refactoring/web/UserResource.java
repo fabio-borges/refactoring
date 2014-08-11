@@ -1,95 +1,102 @@
 package com.h2rd.refactoring.web;
 
-import com.h2rd.refactoring.usermanagement.User;
-import com.h2rd.refactoring.usermanagement.UserDao;
+import java.net.URI;
 
-import javax.ws.rs.*;
-import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.List;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.h2rd.refactoring.usermanagement.UserDTO;
+import com.h2rd.refactoring.usermanagement.UserNotFoundException;
+import com.h2rd.refactoring.usermanagement.UserQuery;
+import com.h2rd.refactoring.usermanagement.UserSearchResult;
+import com.h2rd.refactoring.usermanagement.UserService;
+
+@Component
 @Path("/users")
-public class UserResource{
+public class UserResource {
 
-    public UserDao userDao;
+	private UserService userService;
 
-    @GET
-    @Path("find/")
-    public Response getUsers() {
+	private UserQueryFactory userQueryFactory;
+	
+	@Autowired
+	public UserResource(UserService userService,
+			UserQueryFactory userQueryFactory) {
+		super();
+		this.userService = userService;
+		this.userQueryFactory = userQueryFactory;
+	}
 
-        if (userDao == null) {
-            userDao = UserDao.getUserDao();
-        }
+	@POST
+	@Consumes(MediaType.APPLICATION_XML)
+	public Response addUser(UserDTO user, @Context UriInfo uriInfo) {
+		Integer userId = userService.saveUser(user).getId();
+		URI uri = uriInfo.getAbsolutePathBuilder().path(userId.toString())
+				.build();
+		return Response.created(uri).build();
+	}
 
-        GenericEntity<List<User>> usersEntity = new GenericEntity<List<User>>(userDao.getUsers()) {};
-        return Response.status(200).entity(usersEntity).build();
-    }
+	@PUT
+	@Consumes(MediaType.APPLICATION_XML)
+	@Produces(MediaType.APPLICATION_XML)
+	@Path("/{id}")
+	public Response updateUser(@PathParam("id") Integer id, UserDTO userToUpdate) {
+		userToUpdate.setId(id);
+		try {
+			return Response.ok().entity(userService.updateUser(userToUpdate))
+					.build();
+		} catch (UserNotFoundException e) {
+			return Response.status(Status.NOT_FOUND).build();
+		}
+	}
 
-    @GET
-    @Path("add/")
-    public Response addUser(@QueryParam("name") String name,
-                            @QueryParam("email") String email,
-                            @QueryParam("role") List<String> roles) {
+	@DELETE
+	@Path("/{id}")
+	public Response deleteUser(@PathParam("id") Integer id) {
+		try {
+			return Response.ok().entity(userService.deleteUser(id)).build();
+		} catch (UserNotFoundException e) {
+			return Response.status(Status.NOT_FOUND).build();
+		}
+	}
 
-        User user = new User();
-        user.setName(name);
-        user.setEmail(email);
-        user.setRoles(roles);
+	@GET
+	@Produces(MediaType.APPLICATION_XML)
+	public UserSearchResult getUsers() {
+		return userService.searchUsers(new UserQuery());
+	}
 
-        if (userDao == null) {
-            userDao = UserDao.getUserDao();
-        }
+	@GET
+	@Path("/{id}")
+	public Response findUser(@PathParam("id") Integer id) {
+		final UserDTO userDTO = userService.getUser(id);
+		if (userDTO != null) {
+			return Response.ok().entity(userService.getUser(id)).build();
+		} else {
+			return Response.status(Status.NOT_FOUND).build();
+		}
+	}
 
-        userDao.saveUser(user);
-        return Response.ok().entity(user).build();
-    }
-
-    @GET
-    @Path("update/")
-    public Response updateUser(@QueryParam("name") String name,
-                               @QueryParam("email") String email,
-                               @QueryParam("role") List<String> roles) {
-
-        User user = new User();
-        user.setName(name);
-        user.setEmail(email);
-        user.setRoles(roles);
-
-        if (userDao == null) {
-            userDao = UserDao.getUserDao();
-        }
-
-        userDao.updateUser(user);
-        return Response.ok().entity(user).build();
-    }
-
-    @GET
-    @Path("delete/")
-    public Response deleteUser(@QueryParam("name") String name,
-                               @QueryParam("email") String email,
-                               @QueryParam("role") List<String> roles) {
-        User user = new User();
-        user.setName(name);
-        user.setEmail(email);
-        user.setRoles(roles);
-
-        if (userDao == null) {
-            userDao = UserDao.getUserDao();
-        }
-
-        userDao.deleteUser(user);
-        return Response.ok().entity(user).build();
-    }
-
-    @GET
-    @Path("search/")
-    public Response findUser(@QueryParam("name") String name) {
-
-        if (userDao == null) {
-            userDao = UserDao.getUserDao();
-        }
-
-        User user = userDao.findUser(name);
-        return Response.ok().entity(user).build();
-    }
+	@GET
+	@Path("/search")
+	@Produces(MediaType.APPLICATION_XML)
+	public UserSearchResult findUser(@Context UriInfo uriInfo) {
+		final UserQuery query = userQueryFactory.getUserQuery(uriInfo
+				.getQueryParameters());
+		return userService.searchUsers(query);
+	}
 }

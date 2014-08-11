@@ -1,26 +1,45 @@
 package com.h2rd.refactoring.usermanagement;
 
+import java.io.Serializable;
 import java.util.List;
 
-class User {
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlElement;
 
+@XmlRootElement(name = "user")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class UserDTO implements Serializable {
+
+	private static final long serialVersionUID = 1L;
+
+	@XmlAttribute
 	private Integer id;
 
 	private String name;
 
 	private String email;
 
+	@XmlElement(name = "role")
 	private List<String> roles;
 
-	public User(Integer id, String name, String email, List<String> roles) {
-		super();
+	UserDTO(User user) {
+		this(user.getId(), user.getName(), user.getEmail(), user.getRoles());
+	}
+
+	public UserDTO() {
+	}
+
+	public UserDTO(Integer id, String name, String email, List<String> roles) {
 		this.id = id;
 		this.name = name;
 		this.email = email;
 		this.roles = roles;
 	}
 
-	public User(String name, String email, List<String> roles) {
+	public UserDTO(String name, String email, List<String> roles) {
 		this(null, name, email, roles);
 	}
 
@@ -56,6 +75,10 @@ class User {
 		this.roles = roles;
 	}
 
+	User toUserEntity() {
+		return new User(this.id, this.name, this.email, this.roles);
+	}
+
 	@Override
 	public int hashCode() {
 		return 31 + ((id == null) ? 0 : id.hashCode());
@@ -69,7 +92,7 @@ class User {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		User other = (User) obj;
+		UserDTO other = (UserDTO) obj;
 		if (id == null) {
 			if (other.id != null)
 				return false;
