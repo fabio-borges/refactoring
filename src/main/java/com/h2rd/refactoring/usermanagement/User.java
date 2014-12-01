@@ -7,6 +7,9 @@ import java.util.List;
  */
 class User {
 
+   /**
+    * Id comment
+    */
 	private Integer id;
 
 	private String name;
