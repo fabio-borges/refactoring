@@ -2,6 +2,9 @@ package com.h2rd.refactoring.usermanagement;
 
 import java.util.List;
 
+/*
+ * User comments
+ */
 class User {
 
 	private Integer id;
