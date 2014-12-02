@@ -22,6 +22,9 @@ class User {
 	 */
 	private String email;
 
+	/**
+	 * roles
+	 */
 	private List<String> roles;
 
 	public User(Integer id, String name, String email, List<String> roles) {
