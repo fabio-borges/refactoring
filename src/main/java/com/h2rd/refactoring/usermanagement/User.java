@@ -12,6 +12,9 @@ class User {
     */
 	private Integer id;
 
+	/*
+	 * name
+	 */
 	private String name;
 
 	private String email;
