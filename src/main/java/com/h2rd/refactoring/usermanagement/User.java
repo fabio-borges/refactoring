@@ -3,7 +3,7 @@ package com.h2rd.refactoring.usermanagement;
 import java.util.List;
 
 /*
- * User comments
+ * User comments, changed main branch
  */
 class User {
 
