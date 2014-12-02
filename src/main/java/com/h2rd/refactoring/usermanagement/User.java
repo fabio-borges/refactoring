@@ -17,6 +17,9 @@ class User {
 	 */
 	private String name;
 
+	/**
+	 * email
+	 */
 	private String email;
 
 	private List<String> roles;
